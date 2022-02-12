@@ -36,7 +36,7 @@ bool gameStatePause = false;
 bool gameStateOver = false;
 int score = 0;
 static void endGameDisplay();
-
+static void endGame(int i);
 
 struct Alien {
     float diameter;
@@ -55,16 +55,20 @@ struct Alien {
     //If alien and bomb touched and 1 second passed
     int isDead;
 };
+
 struct Bomb{
     float color[3];
     float size;
     int level, x, y;
     float points[4][2]; //4 vertex 2 axes
 };
-Alien aliens[20]; //5 levels, 4 aliens each
-Bomb bombs[20];
-int numBombs = 0;
 
+Alien aliens[20]; //5 levels, 4 aliens each
+Bomb bombs[20];   //20 bombs to complete to task. It can be increased if wanted.
+int numBombs = 0; //To find remaining number of bombs
+
+//----------------------------------------------------------------------------
+//Creates 20 aliens when init func calls
 void createAliens(){
     srand(time(NULL));
     for (int i = 0 ; i < 20 ; i++){
@@ -102,6 +106,8 @@ void createAliens(){
     }
 }
 
+//----------------------------------------------------------------------------
+//Used to determine the bomb size according to its current level
 void resizeBomb(int bombIdx){
     bombs[bombIdx].size = r[bombs[bombIdx].level];
     bombs[bombIdx].points[0][0] = bombs[bombIdx].x + bombs[bombIdx].size/2 ; bombs[bombIdx].points[0][1] = bombs[bombIdx].y + bombs[bombIdx].size/2; //sag ust
@@ -113,6 +119,9 @@ void resizeBomb(int bombIdx){
     bombs[bombIdx].color[1] = COLORS[bombs[bombIdx].level][1];
     bombs[bombIdx].color[2] = COLORS[bombs[bombIdx].level][2];
 }
+
+//----------------------------------------------------------------------------
+//triggers when user press left mouse click
 void createBomb(int x, int y){
     y = wh- y;
     bombs[numBombs].x = x;
@@ -123,11 +132,19 @@ void createBomb(int x, int y){
     numBombs++;
     if(numBombs >= 20){
         gameStateOver = true;
-        glutDisplayFunc(endGameDisplay);
+        glutTimerFunc(6000, endGame, 0);
     }
 
 }
 
+//----------------------------------------------------------------------------
+//After last bomb drops, default display function changed by this function
+void endGame(int i){
+    glutDisplayFunc(endGameDisplay);
+}
+
+//----------------------------------------------------------------------------
+//Each second bomb falls 1 level below
 void dropBomb(int id){
     for (int i = 0 ; i < numBombs ; i++){
         if(bombs[i].level < 5){
@@ -139,29 +156,25 @@ void dropBomb(int id){
 }
 
 
-/* reshaping routine called whenever window is resized
-or moved */
-
+//----------------------------------------------------------------------------
+/* reshaping routine called whenever window is resized or moved */
 void reshape(GLsizei w, GLsizei h)
 {
     /* adjust clipping box */
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0.0, (GLdouble)w, 0.0, (GLdouble)h);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
     /* adjust viewport and clear */
-
     glViewport(0, 0, w, h);
-
     /* set global size for use by drawing routine */
-
     ww = w;
     wh = h;
 }
 
+//----------------------------------------------------------------------------
+//
 void init(){
     glViewport(0, 0, ww, wh);
 
@@ -182,6 +195,8 @@ void init(){
     glFlush();
 }
 
+//----------------------------------------------------------------------------
+//Prints score vs. to screen
 void bitMapString(float x, float y, std::string s){
     int i = 0;
     glRasterPos2f(x, y);
@@ -197,6 +212,7 @@ void bitMapString(float x, float y, std::string s){
 }
 
 //----------------------------------------------------------------------------
+//checks if there are any aliens that touches any bombs
 int checkCollision(Alien* alien){ //returns the bomb that collision happened with
     if(numBombs == 0)
         return -1;
@@ -224,12 +240,15 @@ int checkCollision(Alien* alien){ //returns the bomb that collision happened wit
     return -1;
 }
 
+//----------------------------------------------------------------------------
+//After 1 second of the collision, aliens dies.
 void killAlien(int alienIdx){
     aliens[alienIdx].isDead = 1;
 }
 
+//----------------------------------------------------------------------------
+//Between collision and killAlien function, alien fades to black. \m/
 void killingAnimation(int alienIdx){
-    //
     if(aliens[alienIdx].isDead == 1)
         return;
     if((aliens[alienIdx].color[0] <= 0)&&(aliens[alienIdx].color[1] <= 0)&&(aliens[alienIdx].color[2] <= 0))
@@ -240,6 +259,8 @@ void killingAnimation(int alienIdx){
     glutTimerFunc(300, killingAnimation, alienIdx);
 }
 
+//----------------------------------------------------------------------------
+//Deafult display function. used for both bombs and aliens
 void display( void )
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -274,6 +295,8 @@ void display( void )
     glFlush();
 }
 
+//----------------------------------------------------------------------------
+//If game ends, game over screen displayed by this function.
 void endGameDisplay( void ){
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0.5, 0.2, 0.4, 5.0);
@@ -293,10 +316,16 @@ void endGameDisplay( void ){
         glutBitmapCharacter(GLUT_BITMAP_8_BY_13, s[i++]);
     }
 
+    glRasterPos2f(x, y-40);
+    i = 0;
+    s = "     PRESS Q TO EXIT";
+    while(s[i] != '\0'){
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13, s[i++]);
+    }
     glFlush();
 }
-//----------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------
 void mouse( int button, int state, int x, int y )
 {
     if ( state == GLUT_DOWN ) {
@@ -310,6 +339,7 @@ void mouse( int button, int state, int x, int y )
 }
 
 //----------------------------------------------------------------------------
+//Checks alien directions and if they hit any of the walls. If they hit, changes direction accordingly.
 void checkDirection(){
     for (int i = 0 ; i < 20 ; i++){
         if(aliens[i].isDead != 0 || aliens[i].isTouched != 0)
@@ -335,6 +365,8 @@ void checkDirection(){
     }
 }
 
+//----------------------------------------------------------------------------
+//Calls every (1000/FPS) seconds, changes alien locations according to their speed and calls display function.
 void idle( int id )
 {
     if(gameStatePause)
@@ -353,11 +385,21 @@ void idle( int id )
 }
 
 //----------------------------------------------------------------------------
+//When game paused and pressed s, each aliens location will be printed.
+void printAlienLoc(){
+    for(int i = 0 ; i < 20; i++ ){
+        if(aliens[i].isDead != 1){
+            std::cout << "Alien No:"+ std::to_string(i)+" - X: "+ std::to_string(aliens[i].x )+ " - Y:"+ std::to_string(aliens[i].y)<< std::endl;
+            std::cout << aliens[i].x << std::endl;
+        }
+    }
+}
 
+//----------------------------------------------------------------------------
 void keyboard( unsigned char key, int x, int y )
 {
     switch( key ) {
-        case 033: // Escape Key
+        //case 033: // Escape Key
         case 'q': case 'Q':
             exit( EXIT_SUCCESS );
             break;
@@ -369,6 +411,7 @@ void keyboard( unsigned char key, int x, int y )
             if(gameStatePause){
                 gameStatePause = !gameStatePause;
                 idle(2);
+                printAlienLoc();
                 gameStatePause = !gameStatePause;
             }
             break;
@@ -376,19 +419,12 @@ void keyboard( unsigned char key, int x, int y )
 }
 //----------------------------------------------------------------------------
 int main( int argc, char **argv ) {
-    //std::cout << "Hello, World!" << std::endl;
-
     glutInit( &argc, argv );
     glutInitContextVersion(3,2); // initialize the OpenGL Context to 3.2.
     glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
     glutInitDisplayMode( GLUT_RGBA | GLUT_SINGLE); // GLUT_DOUBLE | GLUT_DEPTH
     glutInitWindowSize( ww, wh );
-
-    //create graphics window
-    glutCreateWindow( "The Game" );
-
-    //include the following statement due to an error in GLEW library
-    //glewExperimental = GL_TRUE;
+    glutCreateWindow( "The Alien Game" );
 
     glewInit();
 
@@ -398,12 +434,8 @@ int main( int argc, char **argv ) {
     glutDisplayFunc( display );
     glutKeyboardFunc( keyboard );
     glutMouseFunc( mouse );
-    //glutIdleFunc( idle );
     glutTimerFunc(1000 / FPS, idle, 0);
     glutTimerFunc(1000 , dropBomb, 0);
-
     glutMainLoop();
-
-
     return 0;
 }
