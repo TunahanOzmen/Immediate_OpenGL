@@ -7,13 +7,7 @@
 #define SPEEDCOEF 2
 
 /* TO-DO
- * Pause anında olum animasyonu ve bombanin dusmeyi birakmasi lazim
- * README yaz, destruction animasyonu ekstra su an. onu yaz
- * oyun bitisi icin biseyler
- * resize yapildiginda sinirlar da genisletilsin. Hiz artsin/azalsin orana gore, buyuklukler artsin azalsin
- * s ile konumlari da yazilsin alienlarin
  * koselere sikisma sorununa bak
-
  * Skor algoritmasi eklencecek, ekrana yazilacak (ok)
  * Bomba sol buton ile birakilacak -- Bomba hakkı koy boylece array size'ı da limitlemis olursun (ok)
  * hem x hem y icin ayri ayri hizlar olsun (ok)
@@ -345,7 +339,7 @@ void checkDirection(){
         if(aliens[i].isDead != 0 || aliens[i].isTouched != 0)
             continue;
         for (int j = 0 ; j < NumVertices ; j++){
-            if(aliens[i].points[j][0] < WD_DIST || aliens[i].points[j][0] > (ww-WD_DIST) ){
+            if((aliens[i].points[j][0] < WD_DIST && aliens[i].speedx<0) || (aliens[i].points[j][0] > (ww-WD_DIST) && aliens[i].speedx>0 )){
                 aliens[i].speedx *= -1;
                 if(aliens[i].moveRight == 0)
                     aliens[i].moveRight = 1;
@@ -353,7 +347,7 @@ void checkDirection(){
                     aliens[i].moveRight = 0;
                 break;
             }
-            if(aliens[i].points[j][1] < WD_DIST || aliens[i].points[j][1] > (wh-WD_DIST) ){
+            if((aliens[i].points[j][1] < WD_DIST && aliens[i].speedy<0)|| (aliens[i].points[j][1] > (wh-WD_DIST) && aliens[i].speedy>0)){
                 aliens[i].speedy *= -1;
                 if(aliens[i].moveUp == 0)
                     aliens[i].moveUp = 1;
@@ -366,11 +360,25 @@ void checkDirection(){
 }
 
 //----------------------------------------------------------------------------
+
+bool countBadAlien(){
+    int count = 0;
+    for (int i = 12 ; i < 20 ; i++)
+        count += aliens[i].isDead;
+    if(count == 8)
+        return true;
+    return false;
+}
+
 //Calls every (1000/FPS) seconds, changes alien locations according to their speed and calls display function.
 void idle( int id )
 {
     if(gameStatePause)
         return;
+    else if(countBadAlien()){
+        gameStateOver = true;
+        glutTimerFunc(1000, endGame, 0);
+    }
     checkDirection();
     for (int i = 0 ; i < 20 ; i++){
         for (int j = 0 ; j < NumVertices ; j++){

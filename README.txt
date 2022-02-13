@@ -14,9 +14,7 @@ How To Play:
 
 Extras:
 * When an alien dies, it do not just disappears. It fades to black as destroying animation.
-* There are a limit of available bombs to drop(20). But these 20 bombs can be dropped one-by-one or simultaneously.
+* There is a limit of available bombs to drop(20). But these 20 bombs can be dropped one-by-one or simultaneously.
 
-
-
-
-
+Notes:
+* When screen resized, new borders will be set. If any alien remains outside of the view when resized, it will come back to view in time.
