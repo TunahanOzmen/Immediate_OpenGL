@@ -6,15 +6,7 @@
 #define FPS 60
 #define SPEEDCOEF 2
 
-/* TO-DO
- * koselere sikisma sorununa bak
- * Skor algoritmasi eklencecek, ekrana yazilacak (ok)
- * Bomba sol buton ile birakilacak -- Bomba hakkı koy boylece array size'ı da limitlemis olursun (ok)
- * hem x hem y icin ayri ayri hizlar olsun (ok)
- * q oyundan cikar (ok)
- * p oyunu durdurur veya devam ettirir (ok)
- * s, oyun pause edildiyse tek bir basamak ileri gider  (ok)
- */
+
 const int NumVertices = 30; //Each circle composed of 30 vertices
 const float r[5] = {UNIT+8,UNIT+6,UNIT+4,UNIT+2,UNIT}; //alienRadius, levela gore belirlenebilir aslinda
 const float COLORS[5][3] = {
